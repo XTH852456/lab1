@@ -170,5 +170,41 @@ Machine Mode 	  M-mode 	SBI 固件 	访问所有硬件资源
 Supervisor Mode   S-mode 	操作系统内核 	管理内存、处理 Trap
 User Mode 	  U-mode 	用户程序 	仅能执行普通指令
 .3 trap处理
+Trap 是 CPU 从低特权级陷入高特权级的机制，触发原因包括：
+
+    系统调用：用户程序执行 ecall 指令
+    异常：非法指令、访存错误、页错误等
+    中断：时钟中断、外部中断等
+    Trap 处理流程：
+
+用户程序执行 ecall
+       │
+       ▼
+  ┌── 硬件自动完成 ──┐
+  │ 1. sstatus.SPP ← U  │  （记录 Trap 前的特权级）
+  │ 2. sepc ← ecall 地址  │  （记录 Trap 前的 PC）
+  │ 3. scause ← 原因      │  （如 UserEnvCall）
+  │ 4. PC ← stvec         │  （跳转到 Trap 入口）
+  │ 5. 特权级 ← S-mode    │  （切换到内核态）
+  └──────────────────────┘
+       │
+       ▼
+  Trap 入口（__alltraps）
+  ── 保存所有用户寄存器到内核栈（Trap 上下文）
+  ── 跳转到 Rust 的 trap_handler
+       │
+       ▼
+  trap_handler 处理
+  ── 读取 scause 判断 Trap 类型
+  ── 系统调用：处理后 sepc += 4（跳过 ecall 指令）
+  ── 异常：杀死程序
+       │
+       ▼
+  __restore
+  ── 从内核栈恢复用户寄存器
+  ── 执行 sret 返回 U-mode
+       │
+       ▼
+  用户程序从 ecall 的下一条指令继续执行
 
 
