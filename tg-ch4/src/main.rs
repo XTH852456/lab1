@@ -597,9 +597,82 @@ mod impls {
         }
 
         fn munmap(&self, _caller: Caller, addr: usize, len: usize) -> isize {
-            tg_console::log::info!("munmap: addr = {addr:#x}, len = {len}, not implemented");
-            -1
+            self.munmap(addr, len)
         }
+    }
+
+    /// 实现 mmap 系统调用
+    /// 
+    /// 申请 len 字节物理内存，映射到 addr 开始的虚存，属性为 prot
+    fn mmap(&self, _caller: Caller, addr: usize, len: usize, prot: i32, _flags: i32, _fd: i32, _offset: usize) -> isize {
+        // 检查 addr 是否按页对齐
+        if addr % Sv39::PAGE_SIZE != 0 {
+            return -1;
+        }
+
+        // 检查 prot 是否有效
+        if prot & !0b111 != 0 {
+            return -1;
+        }
+
+        // 计算页数
+        let pages = (len + Sv39::PAGE_SIZE - 1) / Sv39::PAGE_SIZE;
+
+        // 分配物理内存
+        let layout = Layout::from_size_align(pages * Sv39::PAGE_SIZE, Sv39::PAGE_SIZE).unwrap();
+        let phys_addr = unsafe { alloc(layout) };
+        if phys_addr.is_null() {
+            return -1;
+        }
+
+        // 构建页表项标志位
+        let mut flags = VmFlags::build_from_str("U_RV");
+        if prot & 0b001 != 0 {
+            flags |= VmFlags::build_from_str("R");
+        }
+        if prot & 0b010 != 0 {
+            flags |= VmFlags::build_from_str("W");
+        }
+        if prot & 0b100 != 0 {
+            flags |= VmFlags::build_from_str("X");
+        }
+
+        // 映射虚拟地址到物理地址
+        let vaddr_start = VAddr::<Sv39>::new(addr);
+        let paddr_start = PPN::new(phys_addr as usize >> Sv39::PAGE_BITS);
+        if self.map_extern(vaddr_start.floor()..vaddr_start.floor() + pages, paddr_start, flags).is_err() {
+            return -1;
+        }
+
+        0
+    }
+
+    /// 实现 munmap 系统调用
+    /// 
+    /// 取消 [addr, addr + len) 的映射
+    fn munmap(&self, _caller: Caller, addr: usize, len: usize) -> isize {
+        // 检查 addr 是否按页对齐
+        if addr % Sv39::PAGE_SIZE != 0 {
+            return -1;
+        }
+
+        // 计算页数
+        let pages = (len + Sv39::PAGE_SIZE - 1) / Sv39::PAGE_SIZE;
+
+        // 检查是否所有页都已映射
+        let vaddr_start = VAddr::<Sv39>::new(addr);
+        for vpn in vaddr_start.floor()..vaddr_start.floor() + pages {
+            if self.translate(vpn.base()).is_none() {
+                return -1;
+            }
+        }
+
+        // 取消映射
+        if self.unmap(vaddr_start.floor()..vaddr_start.floor() + pages).is_err() {
+            return -1;
+        }
+
+        0
     }
 }
 
