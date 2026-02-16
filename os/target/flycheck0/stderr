@@ -4,7 +4,9 @@ warning: `/home/oslab/lab/lab1/os/.cargo/config` is deprecated in favor of `conf
 warning: unused manifest key: profile.dev.doctest
 warning: unused manifest key: profile.dev.test
     Blocking waiting for file lock on package cache
-   0.032986767s  INFO prepare_target{force=false package_id=os v0.1.0 (/home/oslab/lab/lab1/os) target="os"}: cargo::core::compiler::fingerprint: fingerprint dirty for os v0.1.0 (/home/oslab/lab/lab1/os)/Check { test: true }/TargetInner { name: "os", doc: true, ..: with_path("/home/oslab/lab/lab1/os/src/main.rs", Edition2021) }
-   0.033054157s  INFO prepare_target{force=false package_id=os v0.1.0 (/home/oslab/lab/lab1/os) target="os"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(FailedToReadMetadata { path: "/home/oslab/lab/lab1/os/target/riscv64gc-unknown-none-elf/debug/deps/libos-7c62a0cb39ccb1f5.rmeta" }))
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   0.069856557s  INFO prepare_target{force=false package_id=os v0.1.0 (/home/oslab/lab/lab1/os) target="os"}: cargo::core::compiler::fingerprint: fingerprint dirty for os v0.1.0 (/home/oslab/lab/lab1/os)/Check { test: true }/TargetInner { name: "os", doc: true, ..: with_path("/home/oslab/lab/lab1/os/src/main.rs", Edition2021) }
+   0.069936610s  INFO prepare_target{force=false package_id=os v0.1.0 (/home/oslab/lab/lab1/os) target="os"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(FailedToReadMetadata { path: "/home/oslab/lab/lab1/os/target/riscv64gc-unknown-none-elf/debug/deps/libos-7c62a0cb39ccb1f5.rmeta" }))
     Checking os v0.1.0 (/home/oslab/lab/lab1/os)
 error: could not compile `os` (bin "os" test) due to 1 previous error
